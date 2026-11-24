@@ -1,11 +1,6 @@
 node_modules
 dist
 
-# Removing I dunno what it is...
-.agents
-.claude
-.windsurf
-
 # Keep environment variables out of version control
 .env
 .env.local
