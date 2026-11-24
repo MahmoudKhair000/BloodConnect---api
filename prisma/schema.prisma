@@ -1,0 +1,114 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AccountStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum BloodGroup {
+  A_POSITIVE
+  A_NEGATIVE
+  B_POSITIVE
+  B_NEGATIVE
+  AB_POSITIVE
+  AB_NEGATIVE
+  O_POSITIVE
+  O_NEGATIVE
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum StaffRole {
+  COORDINATOR
+  MEDICAL_VERIFIER
+  HOSPITAL_ADMIN
+}
+
+enum BloodRequestStatus {
+  PENDING
+  COORDINATING
+  SCHEDULED
+  FULFILLED
+  CANCELLED
+}
+
+
+
+model Hospital {
+  id              String @id @default(uuid()) @db.Uuid
+  name            String
+  city            String
+  contactPhone    String
+  staffMembers    StaffMember[]
+
+  bloodRequests   BloodRequest[] @relation("HospitalBloodRequests")
+}
+
+model StaffMember {
+  id            String      @id @default(uuid()) @db.Uuid
+  firstName     String
+  lastName      String
+  email         String      @unique
+  passwordHash  String
+  role          StaffRole
+  hospitalId    String      @db.Uuid
+
+  hospital      Hospital    @relation(fields: [hospitalId], references: [id])
+}
+
+model Donor {
+  id            String      @id @default(uuid()) @db.Uuid
+  firstName     String
+  lastName      String
+  email         String      @unique
+  passwordHash  String
+  contactPhone  String
+  isVerified    Boolean     @default(false)
+  bloodGroup    BloodGroup?
+
+  donations Donation[] @relation("DonorDonations")
+}
+
+model BloodRequest {
+  id          String             @id @default(uuid()) @db.Uuid
+  patientName String
+  bloodGroup  BloodGroup
+  units       Int
+  hospitalId  String             @db.Uuid
+  requiredBy  DateTime?
+  status      BloodRequestStatus @default(PENDING)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  hospital  Hospital   @relation("HospitalBloodRequests", fields: [hospitalId], references: [id])
+  donations Donation[] @relation("BloodRequestDonations")
+}
+
+model Donation {
+  id         String   @id @default(uuid()) @db.Uuid
+  donorId    String   @db.Uuid
+  requestId  String   @db.Uuid
+  units      Int
+  donatedAt  DateTime @default(now())
+
+  donor        Donor        @relation("DonorDonations", fields: [donorId], references: [id])
+  bloodRequest BloodRequest @relation("BloodRequestDonations", fields: [requestId], references: [id])
+}
