@@ -79,6 +79,15 @@ export const createDonor = async (req, res) => {
     const { firstName, lastName, email, contactPhone, bloodGroup, password } = req.body;
     // const salt = await bcrypt.genSalt(12);
     const passwordHash = await bcrypt.hash(password, 12);
+    ////////////////////////////////////////////////////
+    if (validator.isEmail(email)) {
+        res.status(400).json({
+            ok: false,
+            message: 'Make sure you entered a valid email',
+        });
+        ///////
+        return;
+    }
     // SERVER TRY/CATCH(500) BLOCK
     try {
         const newDonor = await prisma.donor.create({
@@ -119,22 +128,10 @@ export const loginDoner = async (req, res) => {
         return;
     }
     ////////////////////////////////////////////////////
-    if (!email
-        || !password
-        || typeof email !== 'string'
-        || typeof password !== 'string') {
+    if (typeof email !== 'string' || typeof password !== 'string') {
         res.status(400).json({
             ok: false,
             message: 'Make sure you entered the email and password!!',
-        });
-        ///////
-        return;
-    }
-    ////////////////////////////////////////////////////
-    if (validator.isEmail(email)) {
-        res.status(400).json({
-            ok: false,
-            message: 'Make sure you entered a valid email',
         });
         ///////
         return;
@@ -159,23 +156,23 @@ export const loginDoner = async (req, res) => {
             ///////
             return;
         }
-        else {
-            const token = jwt.sign({
-                id: donorUser.id,
-                email: donorUser.email,
-            }, jwtSecret, {
-                expiresIn: '1 hour',
-            });
-            ////////
-            res.status(200).json({
-                ok: true,
-                message: 'Logged in successfully!',
-                data: {
-                    user: donorUser,
-                    token,
-                },
-            });
-        }
+        ///////////////////////////
+        const token = jwt.sign({
+            id: donorUser.id,
+            email: donorUser.email,
+            type: 'donor',
+        }, jwtSecret, {
+            expiresIn: '1 hour',
+        });
+        ////////
+        res.status(200).json({
+            ok: true,
+            message: 'Donor logged in successfully!',
+            data: {
+                user: donorUser,
+                token,
+            },
+        });
     }
     catch (err) {
         const errMsg = err instanceof Error ? err.message : 'Something went wrong!';
